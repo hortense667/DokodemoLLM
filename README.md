@@ -37,7 +37,7 @@ This software allows you to call LLMs (OpenAI GPT, Google's Gemini) and input th
      `OPENAI_API_KEY`
    - **Google API Key**  
      Obtain a Gemini API key and set the following environment variable:  
-     `GOOGLE_API_KEY`
+     `GEMINI_API_KEY`
    Note: You can set only the one you want to use, or both if you want to use both.
 
 2. Unzip DokodemoLLM.zip  
@@ -93,7 +93,7 @@ UIは、ドロップダウンリストと簡易エディタからなっていま
   `OPENAI_API_KEY`
 - **GoogleのAPIキー**  
   GeminiのAPIキーを取得し、以下の環境変数をセットしてください。  
-  `GOOGLE_API_KEY`
+  `GEMINI_API_KEY`
 ※どちらか一方、使いたいほうだけでセットしてもよいし、両方使いたいときは両方セットしてください。
 
 2. DokodemoLLM.zipの解凍
