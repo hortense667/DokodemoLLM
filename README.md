@@ -1,293 +1,412 @@
-# DokodemoLLM ver.2.0.0
+# DokodemoLLM ver.2.0.3
 
-あらゆるアプリケーションからLLM（OpenAIのGPTとGemini）を呼び出せるソフトウェアです。
-This software allows you to call LLM (OpenAI GPT and Gemini)  from within any application.  
+DokodemoLLM is a Windows tool that lets you select text in *any* application (browser / Word / mail / editor, etc.), press a shortcut, send it to an LLM, and paste the result back in place.
+> DokodemoLLM は、どのアプリ（ブラウザ / Word / メール / エディタ等）でも 選択した文章をショートカット一発で LLM に投げて、結果をその場に貼り込めるWindows向けのツールです。
 
-(c) 2025, 2026 Satoshi Endo 
-https://x.com/hortense667
+> Note: The Japanese documentation starts after the English section.  
+> （日本語の説明は英語による説明の後に記載しています）
+
+(c) 2025, 2026 Satoshi Endo  
+https://x.com/hortense667  
 https://ascii.jp/serialarticles/1225476/
 
-Note: 日本語の説明は英語による説明の後に記載しています。
+- The tool itself is **free to use**.
+- If you use **OpenAI / Gemini APIs**, you must follow each service’s terms and pricing.  
+  **Gemini can be tested with its free API quota**, which is usually enough for everyday text editing / summarizing / translating.
 
-## Overview
-This software allows you to call LLMs (OpenAI GPT, Google's Gemini, and compatible local/network LLM servers such as DGX Spark) and input the results in most Windows software where text input is required.
+---
 
-## Usage Instructions
+## Download (GitHub Releases)
 
-1. **Execute DokodemoLLMahk.exe**  
-   Obtain an API key from OpenAI or Gemini and set it as an environment variable. Then, simply unzip the distribution package and execute DokodemoLLMahk.exe. An icon will appear in the system tray.
+Download the distribution ZIP from GitHub Releases:
 
-2. **How to Call LLM**  
-   2-1. Select Text in Input Area  
-   First, select the text you want to process in the input or editing area of applications like Gmail, Word, or text editors.
+```text
+https://github.com/hortense667/DokodemoLLM
+````
 
-   2-2. Input Prompt  
-   Use `Win-Ctrl-o` to call OpenAI GPT, `Win-Ctrl-g` for Gemini, or **`Ctrl-Win-d`** for DGX / local LLM. The UI (in English) consists of:
-   - A **dropdown list** of prompt history and a **multi-line editor** for the prompt.
-   - **Temperature** (0.0–2.0) and **top_p** (0.0–1.0) sliders in one row; defaults depend on the model (e.g. GPT/Gemini 0.7, DGX 0.2 for temperature; top_p default 1.0).
-   - A **hint line** below the sliders (translation/summary vs. variation, and when to lower top_p if output is too random).
-   - **Reset to default**: When the current temperature/top_p differ from the selected model’s default, a red “Reset to default” button appears; click it to restore the model’s default values.
-   - Buttons: **OK**, **Cancel**, **Clear**.
+(Open the page → **Releases** → download the latest ZIP)
 
-   For the first prompt, type in the editor and press "OK". You can pick a previous prompt from the dropdown; they are listed most-recent first. The selected prompt is shown in the editor for editing. Prompt history is saved in "prompt_history.txt" (up to 256 entries). Each entry stores the prompt plus **temperature**, **top_p**, and the **model name** (e.g. gpt-4o, gemini-2.5-flash, nvidia/Llama-3.3-70B-Instruct-FP4). When you choose a history item, if the stored model name matches the model you are using now, the stored temperature and top_p are restored; otherwise the current model’s defaults are used.
+---
 
-   Examples: "Summarize", "Proofread the following", "Translate to English", or multi-line prompts.  
-   Note: Appending "/w" at the end of a prompt runs a web search and uses the first 1000 characters from the top 3 sites as context.
+## Quick Start: You only need 2 EXEs + 1 ICO
 
-3. **Confirm Content**  
-   After a few seconds or up to several tens of seconds, a window will appear asking **"Use this result?"**  
-   - **Yes**: Replaces the selection with the result  
-   - **No**: No changes  
-   - **Cancel**: Appends the result to the original text.
+After extracting the ZIP, you can start using it with:
 
-4. **Errors**  
-   If the API returns a quota error (e.g. OpenAI 429 / insufficient_quota), a short message is shown suggesting you check plan and billing or try again later. Other LLM errors are shown with an "LLM error:" prefix.
+* **DokodemoLLMahk.exe** — resident launcher (hotkeys / paste-back)
+* **DokodemoLLM.exe** — the LLM caller (backend)
+* **dokodemollm.ico** — **must stay in the same folder** (do not move/delete)
 
-## Necessary Settings for Operation
+> A `ソース` (source) folder may also appear after extraction, but it is **not needed for normal users** (it’s for developers/tinkerers).
 
-1. **Set Environment Variables**  
-   - **OpenAI API Key**  
-     Obtain an OpenAI API key and set the following environment variable:  
-     `OPENAI_API_KEY`  
-     Optionally set `OPENAI_MODEL` (default: `gpt-4o`) to use a different model.
-   - **Google API Key**  
-     Obtain a Gemini API key and set the following environment variable:  
-     `GOOGLE_API_KEY`  
-     Optionally set `GEMINI_MODEL` (default: `gemini-2.5-flash`) to use a different model.
-   - **DGX / local LLM (for Ctrl-Win-d)**  
-     When using a local or network LLM server (e.g. vLLM on NVIDIA DGX Spark) that provides an OpenAI-compatible API, set:  
-     `LOCALLLM_BASE_URL`, `LOCALLLM_MODEL`, and optionally `LOCALLLM_API_KEY`. See the section "Using Local LLM (DGX Spark)" for details. 
-     Note: Local mode was previously implemented in a fork by fugahoge, but since the code was rewritten in C#, this Python version introduces it as a new feature. The speed-up approach also draws from fugahoge's method.
+---
 
-   Note: You can set only the one you want to use, or multiple if you want to use them.
+## Setup (fast)
 
-2. Unzip DokodemoLLM.zip  
-   Download dokodemollm.zip from the "Releases" section of the DokodemoLLM repository. Unzip it to an appropriate folder. DokodemoLLMahk.exe is included in the extracted folder. Leave the dist folder and its contents in the same folder where you execute DokodemoLLMahk.exe.
+### 1) Extract the ZIP
 
-3. **Register for Auto Execution**  
-   Register a shortcut to DokodemoLLMahk.exe in the Windows startup menu.
+* Keep the extracted folder structure as-is.
+* Make sure **dokodemollm.ico stays in the same folder** as the EXEs.
 
-## Changing Shortcuts
-If you want to change the shortcuts (`Win-Ctrl-o`, `Win-Ctrl-g`, or `Ctrl-Win-d`), modify DokodemoLLM.ahk in the source folder. In this case, you need to have AutoHotKey installed and running. Currently, the settings are as follows:
-- "^#o::" launches with Ctrl-Win-o: OpenAI GPT (model from env var `OPENAI_MODEL`, default gpt-4o)
-- "^#g::" launches with Ctrl-Win-g: Gemini (model from env var `GEMINI_MODEL`, default gemini-2.5-flash)
-- "^#d::" launches with **Ctrl-Win-d**: DGX / local LLM (model from env var `LOCALLLM_MODEL`)
+### 2) Get an API key and set environment variables
 
-## Usage on Mac
-1. **Prepare a Snippet Tool Other than AutoHotKey**  
-   Use an appropriate snippet tool to create a script that calls DokodemoLLM.py. Therefore, a Python environment is required. The snippet tool passes the prompt to DokodemoLLM.py via clipboard, and the result is returned to the snippet tool via clipboard as well. Please see the source code for details.
+You only need **either OpenAI or Gemini** to start.
+**A Gemini-free-quota example is shown below**; for typical editing/summarization/translation, the free tier is often enough.
+
+Environment variables:
+
+* For OpenAI: `OPENAI_API_KEY`
+* For Gemini: `GOOGLE_API_KEY` (or `GEMINI_API_KEY`)
+
+Optional (only if you want to change the model):
+
+* OpenAI: `OPENAI_MODEL` (e.g. `gpt-4o`)
+* Gemini: `GEMINI_MODEL` (e.g. `gemini-2.5-flash`)
+
+#### Where to get API keys (direct links)
+
+```text
+OpenAI:
+https://platform.openai.com/
+
+Gemini (Google AI Studio):
+https://aistudio.google.com/
+```
+
+Typical steps:
+
+1. Sign in
+2. Create an API key (API Keys / Get API key)
+3. Copy the key string
+4. Set it as a Windows environment variable
+
+#### Minimal “Gemini free quota” setup (recommended)
+
+* Set only `GOOGLE_API_KEY`
+* Optionally set `GEMINI_MODEL=gemini-2.5-flash`
+* Start the tool and use it for summarizing / rewriting / translating within the free quota
+
+#### API key safety (important)
+
+* Treat API keys like passwords.
+* **Never** paste them into README files, notes, screenshots, videos, or public GitHub repos.
+* If you suspect leakage, revoke the key immediately and issue a new one.
+
+> If you set/change environment variables **after launching DokodemoLLM**, you must **exit the tool and launch it again**.
+> See **“How to Exit (Important)”** in the Japanese section.
+
+### 3) Launch `DokodemoLLMahk.exe`
+
+* A tray icon appears.
+* **First run may take tens of seconds** for internal preparation.
+  Because of this, enabling **auto-start** (described later) is recommended.
+* After that, use it from any app via hotkeys.
+
+---
+
+## How to Use
+
+1. Select text in any application
+2. Press a hotkey
+3. Enter a prompt and confirm
+4. The result is pasted back
+
+Default hotkeys:
+
+* **Win + Ctrl + O**: OpenAI (GPT)
+* **Win + Ctrl + G**: Gemini
+* **Ctrl + Win + D**: Local LLM (explained later)
+
+---
+
+## Prompt History
+
+* Stored in `prompt_history.txt`
+* Keeps the **most recent 256 entries** (older ones are discarded)
+* If you want to remove sensitive or unwanted entries, you may edit/delete `prompt_history.txt` with a text editor.
+
+---
+
+## Auto-start (recommended)
+
+On launch, DokodemoLLM may need **tens of seconds** to be fully ready (especially on first run).
+For daily use, set `DokodemoLLMahk.exe` to start with Windows:
+
+1. Press `Win + R`
+2. Type `shell:startup` and press Enter
+3. Put a shortcut to `DokodemoLLMahk.exe` into that folder
+
+---
+
+## Local LLM (optional)
+
+The hotkey **Ctrl + Win + D** is for a local / internal server that provides an **OpenAI-compatible API**.
+
+Environment variables:
+
+* `LOCALLLM_BASE_URL` (e.g. `http://<IP>:8000/v1`)
+* `LOCALLLM_MODEL` (model id exposed by your server)
+* `LOCALLLM_API_KEY` (only if required)
+
+Notes:
+
+* **Normally it runs in resident server mode.** The AHK launcher sends requests to the local endpoint.
+* Set `<IP>` to the IP address of the machine running your local LLM (check your router, etc.).
+* If you want to access it remotely, you can use tools like **Tailscale**:
+
+  * Run `tailscale ip` on the server and use the displayed IP.
+  * With this setup, you can use your local LLM while away from home/office as long as you have network access.
+
+---
+
+## Change Hotkeys (requires AutoHotKey) + Rebuild EXE
+
+To change hotkeys, edit `DokodemoLLM.ahk` and rebuild the launcher EXE.
+
+1. Install **AutoHotKey (AHK)** from its official site
+2. Edit `DokodemoLLM.ahk` (VS Code recommended)
+
+   * Modifiers:
+
+     * `#` = Win
+     * `^` = Ctrl
+     * `!` = Alt
+   * Examples:
+
+     * `#^o::` → Win+Ctrl+O
+     * `#^g::` → Win+Ctrl+G
+     * `^#d::` → Ctrl+Win+D
+3. Run `build_ahk_exe.bat` to rebuild `DokodemoLLMahk.exe`
+4. Exit and re-launch the tool
+
+Build note:
+
+* Avoid building inside synced folders (OneDrive/Dropbox), as file locks may break the build.
+* Hotkeys may conflict with other software. If it stops responding, try a different combination.
+
+---
+
+## Credits
+
+* Author / Maintainer: **hortense667**
+* Repository: `hortense667/DokodemoLLM` (GitHub)
+* Uses:
+
+  * **AutoHotKey** (hotkey resident launcher)
+  * **OpenAI API / Gemini API** (depending on your configuration)
+
+---
 
 ## Disclaimer
 
-The authors and contributors of this software do not compensate for any damage or loss that users may suffer from using it. We are generally unable to answer individual questions or provide support. Since the source code is available, asking an AI or consulting the code yourself is one option. In particular, server-side configuration (e.g. local LLM, vLLM, DGX Spark) depends on your environment; please resolve such issues on your own.
+No warranty. The author/contributors are not liable for any damages resulting from use of this software.
+I generally cannot respond to individual questions. Since the source code is publicly available, please consider asking the AI or checking the code yourself. In particular, server-side configurations (such as local LLM, vLLM, DGX Spark, etc.) depend on the user's environment, so please resolve these issues on your own.
 
+---
 
-## 概要
-Windowsのほとんどのソフトウェアのテキストを入力するシーンでLLM（OpenAI GPT、GoogleのGemini、およびDGX Sparkなどのローカル／ネットワークLLM）を呼び出して結果を入力できるソフトウェアです。
+---
 
-## 使い方の手順
+# DokodemoLLM（Windows）— README（日本語）
 
-1. **DokodemoLLMahk.exeの実行**  
-OpenAI、たまは、GeminiのAPIキーを取得して環境変数に設定してください。あとは、配布パッケージのzipを解凍してDokodemoLLMahk.exeを実行するだけ。トレイにアイコンが現れます。
+> Note: **英語の説明が前半にあります。**（English section is at the top）
 
-2. **LLMの呼び出し方**  
-2-1. テキスト入力エリアで範囲選択  
-まず、Gmail、Word、テキストエディタなどの入力・編集画面で処理対象にしたい部分を範囲選択します。
+* ツール自体は **無料**で使えます。
+* **OpenAI / Gemini API** を使う場合は、各サービスの利用条件・課金体系に従います。
+  **Gemini は無料枠で試せる**ので、通常のテキスト編集・要約・翻訳なら無料枠でも十分実用になることが多いです。
 
-2-2. プロンプトの入力  
-`Win-Ctrl-o`でOpenAIのGPT、`Win-Ctrl-g`でGemini、**`Ctrl-Win-d`**でDGX／ローカルLLMが呼び出されます。
+---
 
-UIは英語表示で、次の要素があります。
-- **ドロップダウン**（履歴）と**複数行エディタ**（プロンプト入力）
-- **Temperature**（0.0～2.0）と **top_p**（0.0～1.0）のスライダーが1行に並ぶ（モデルごとの既定値：GPT/Gemini は temperature 0.7、DGX は 0.2；top_p は既定 1.0）
-- スライダー下の**ヒント**（翻訳・要約時は低めの temperature、バリエーション出したいときは高め；発散しすぎる場合は top_p を下げる、など）
-- **Reset to default**：現在の temperature／top_p がそのモデルの既定値と異なるときだけ赤い「Reset to default」ボタンが表示され、押すと既定値に戻る
-- ボタン：**OK**、**Cancel**、**Clear**
+## ダウンロード（GitHub Releases）
 
-初めてのプロンプトはエディタに入力して「OK」を押してください。過去のプロンプトはドロップダウンから選べます（直近使用順）。選んだプロンプトはエディタに表示されるので編集して使えます。プロンプトが決まったら「OK」をクリックします。
+配布 zip は GitHub の Releases からダウンロードできます。
 
-履歴は「prompt_history.txt」に最大256件まで保存されます。**各履歴にはプロンプトに加え、temperature・top_p・使用したモデル名（例: gpt-4o, gemini-2.5-flash, nvidia/Llama-3.3-70B-Instruct-FP4）が保存されます。** 履歴を選んだとき、保存時のモデル名と今使うモデルが同じなら保存された temperature／top_p が復元され、異なるモデルならそのモデルの既定値が使われます。
+```text
+https://github.com/hortense667/DokodemoLLM
+```
 
-例：「Summarize」「Proofread the following」「英訳して」「誤字チェック」など。改行を含む複雑なプロンプトも入力できます。  
-※プロンプトの末尾に「/w」をつけると Web 検索し、上位3サイトの冒頭1000文字を参考に答えます。
+（上のページ → **Releases** → 最新版 → zip を取得）
 
-### ローカルLLMモード（Ctrl-Win-d）
+---
 
-OpenAI互換APIを提供するローカル／ネットワークサーバー（例：NVIDIA DGX Spark上のvLLM）を使う場合は、**Ctrl-Win-d** で呼び出せます。環境変数 `LOCALLLM_BASE_URL` と `LOCALLLM_MODEL` を設定してください（`LOCALLLM_API_KEY` は任意）。詳細は下記「ローカルLLM（DGX Spark）を使う場合（詳細）」を参照してください。
-なおローカルモードは、fugahogeさんによるforkで実現されていましたが、コードがc# に書き換えられていたためPython版のこちらは新なフィーチャーと実装することとしました。また、高速化に関してもfugahogeさんのアプローチを参考にさせていただいています。
+## 必要なのは「2つの exe」＋「ico」
 
-3. **内容確認**  
-数秒から数十秒が経過すると **「Use this result?」** のウィンドウが表示されます。  
-- **Yes**：選択範囲が結果で置き換え  
-- **No**：変更なし  
-- **Cancel**：元の文の後に結果が追記されます。
+解凍後、基本は次だけで動きます。
 
-4. **エラー表示**  
-API のクォータ超過（OpenAI の 429 / insufficient_quota など）のときは、プラン・請求の確認や時間をおいて再試行する旨の短いメッセージが表示されます。その他の LLM エラーは「LLM error:」を付けて表示されます。
+* **DokodemoLLMahk.exe**：常駐（ショートカット受付・貼り込み）
+* **DokodemoLLM.exe**：LLM 呼び出し本体（裏側で動く）
+* **dokodemollm.ico**：起動時に参照されるため **同じフォルダに置いたまま**（削除・移動しない）
 
-## PyInstaller で exe 化して使う
+> 解凍すると `ソース` フォルダができますが、**一般ユーザーには不要**です（開発・改造向け）。
 
-Python をインストールしたくない場合や、配布しやすくするために exe 化できます。
+---
 
-1. **ビルド**  
-   同じフォルダで `build_exe.bat` を実行します（日本語を避けたメッセージで、アイコンなし spec を使い Dropbox 等でのロックエラーを防ぎます）。
-   ```powershell
-   pip install pyinstaller openai google-generativeai pyperclip requests beautifulsoup4
-   build_exe.bat
-   ```
-   または手動で: `pyinstaller --noconfirm --clean DokodemoLLM.spec`  
-   `dist\DokodemoLLM.exe` ができます。Dropbox 等の同期フォルダで WinError 110 が出る場合は、`dist` をローカルドライブに変えるか、生成した exe を別フォルダにコピーしてから使ってください。
+## 使い始める手順
 
-2. **AutoHotkey 側の設定**  
-   - **推奨**: `DokodemoLLM.exe` を `DokodemoLLM.ahk` と同じフォルダに置く。AHK は同じフォルダの `DokodemoLLM.exe` を自動で使います。
-   - **別フォルダに置く場合**: ユーザー環境変数 `DokodemoLLM_Exe` に exe のフルパスを設定（例: `C:\Tools\DokodemoLLM.exe`）。
+### 1) zip を解凍する
 
-3. **常駐の起動**  
-   exe を使う場合、AHK が初回にサーバー未起動を検知すると自動で `DokodemoLLM.exe serve` を起動します。事前に手動で起動したい場合は `DokodemoLLM.exe serve` を実行してください。
+* 解凍したフォルダ内の構成は **そのまま**で OK です。
+* **dokodemollm.ico も同じフォルダに置いたまま**にしてください。
 
-4. **API キー**  
-   exe 化しても環境変数（`OPENAI_API_KEY` / `GOOGLE_API_KEY` など）はそのまま必要です。AHK と同じ環境で exe を動かせば同じ変数が参照されます。
+### 2) APIキーを用意して、環境変数に入れる
 
-## AHK を exe 化してスタートアップで起動
+まずは **OpenAI か Gemini のどちらか1つだけ**で OK です。
+なお **Gemini は無料枠のAPIを使う例を説明します**。無料枠でも通常のテキスト編集・要約・翻訳では十分実用になります。
 
-AutoHotkey を入れていない PC でも動かしたり、ログイン時に自動で起動させたい場合は、AHK を exe にコンパイルしてスタートアップに登録します。
+必要な環境変数：
 
-1. **前提**  
-   - ビルド時だけ **AutoHotkey v2** がインストールされている必要があります。  
-   - 出力する **DokodemoLLMahk.exe** は「AHK のランチャー」用です。Python 常駐用の **DokodemoLLM.exe** とは別ファイルです。
+* OpenAI：`OPENAI_API_KEY`
+* Gemini：`GOOGLE_API_KEY`（または `GEMINI_API_KEY`）
 
-2. **ビルド**  
-   同じフォルダで `build_ahk_exe.bat` を実行します。
-   ```batch
-   build_ahk_exe.bat
-   ```
-   - 同じフォルダに **DokodemoLLMahk.exe** ができます。  
-   - `DokodemoLLM.ico` があれば exe のアイコンに使います。  
-   - Ahk2Exe が見つからない場合は、AutoHotkey v2 をインストールするか、環境変数 **AHK2EXE_PATH** に `Ahk2Exe.exe` のフルパスを設定してください。
+モデルの設定例：
 
-3. **スタートアップに登録**  
-   - `Win + R` → `shell:startup` → Enter でスタートアップフォルダを開く。  
-   - `DokodemoLLMahk.exe` のショートカットを作成し、そのフォルダに置く（または exe を直接コピー）。  
-   - これでログイン時にトレイで DokodemoLLM が起動し、Ctrl+Win+o / g / d が使えます。
+* OpenAI：`OPENAI_MODEL`（例：`gpt-4o`）
+* Gemini：`GEMINI_MODEL`（例：`gemini-2.5-flash`）
 
-4. **フォルダ構成の目安**  
-   スタートアップからは「ショートカット」で起動するのが一般的です。ショートカットの「作業フォルダ」は exe と同じフォルダにしておくと、`prompt_history.txt` や `DokodemoLLM.exe`（Python 側）の参照が安定します。exe を別の場所に移した場合は、そのフォルダに `DokodemoLLM.exe`（と必要なら `prompt_history.txt`）も一緒に置いてください。
+#### APIキー入手先（具体的URL）
 
-## Python常駐モード（高速化）
+```text
+OpenAI:
+https://platform.openai.com/
 
-毎回Pythonを起動せず、**常駐サーバーにHTTPで依頼**するため、応答が速くなります（起動・importは1回だけ）。
+Gemini（Google AI Studio）:
+https://aistudio.google.com/
+```
 
-- **自動**: 初回にショートカットを押すと、サーバーが未起動なら自動で `DokodemoLLM.py serve` が起動し、約5秒後に再試行します。
-- **手動で常駐させたい場合**: あらかじめ次を実行しておくと、初回からすぐに依頼できます。  
-  `python DokodemoLLM.py serve`  
-  （ポート 28765 で待機。AHKはここにPOSTして結果を受け取ります。）
-- **単発モード（従来どおり）**: `python DokodemoLLM.py GPT` のようにモデル名を指定すると、クリップボードからペイロードを読んで1回だけ実行します。
+入手手順：
 
-## 動作のために必要な設定
+1. 上のページにログイン
+2. APIキーを作成（API Keys / Get API key など）
+3. キーをコピー
+4. Windows の環境変数に貼り付け
 
-1. **環境変数の設定**  
-- **OpenAIのAPIキー**  
-  OpenAIのAPIキーを取得し、以下の環境変数をセットしてください。  
-  `OPENAI_API_KEY`  
-  任意で `OPENAI_MODEL`（既定: `gpt-4o`）を設定すると別モデルを指定できます。
-- **GoogleのAPIキー**  
-  GeminiのAPIキーを取得し、以下の環境変数をセットしてください。  
-  `GOOGLE_API_KEY`  
-  任意で `GEMINI_MODEL`（既定: `gemini-2.5-flash`）を設定すると別モデルを指定できます。
-- **DGX／ローカルLLM（Ctrl-Win-d用）**  
-  ローカルやネットワーク上のLLMサーバー（例：NVIDIA DGX Spark上のvLLM）でOpenAI互換APIを提供している場合、`LOCALLLM_BASE_URL`、`LOCALLLM_MODEL`、必要なら`LOCALLLM_API_KEY`をセットしてください。詳しくは「ローカルLLM（DGX Spark）を使う場合（詳細）」を参照。
-※使いたいものだけセットすればよく、複数使うときはそれぞれの環境変数をセットしてください。
+#### Gemini 無料枠で試す最小例
 
-2. DokodemoLLM.zipの解凍
-DokodemoLLMのリポジトリの「リリース」からdokodemollm.zipをダウンロード。
-適切なフォルダに展開してください。
-解答したフォルダの中にあるDokodemoLLMahk.exeが入っています。
-解凍フォルダのdistなどのフォルダとその中身は、DokodemoLLMahk.exeを実行するフォルダにそのまま置いてください。
+* `GOOGLE_API_KEY` だけ設定して試す
+* 必要なら `GEMINI_MODEL=gemini-2.5-flash` を設定
+  → 要約・翻訳・リライトなどが軽快に動きます（無料枠の範囲で）
 
-3. **自動実行のための登録**  
-WindowsのスタートアップメニューにDokodemoLLMahk.exeのショートカットを登録します。
+#### APIキー取り扱いの注意（重要）
 
-## ショートカットの変更
-ショートカット（`Win-Ctrl-o`、`Win-Ctrl-g`、`Ctrl-Win-d`）を変更したい場合は、ソースの DokodemoLLM.ahk を修正して使ってください。その場合は、AutoHotKeyをインストールして状態にしておく必要があります。
-現状、以下のように設定されています。
-- 「^#o::」は、Ctrl-Win-oで起動：OpenAIのGPT（modelは環境変数`OPENAI_MODEL`、既定 gpt-4o）
-- 「^#g::」は、Ctrl-Win-gで起動：Gemini（modelは環境変数`GEMINI_MODEL`、既定 gemini-2.5-flash）
-- 「^#d::」は、**Ctrl-Win-d**で起動：DGX／ローカルLLM（modelは環境変数`LOCALLLM_MODEL`で指定）
+* APIキーは **パスワードと同等**です。
+* README、メモ、スクリーンショット、動画、公開リポジトリに **貼らない**でください。
+* 漏えいが疑われたら、キーを無効化して作り直してください。
 
-## ローカルLLM（DGX Spark）を使う場合（詳細）
+> **環境変数を、このソフト起動後に設定・変更した場合**：
+> いったん **DokodemoLLM を終了してから起動し直してください**。
+> 終了の仕方は後半の **「ソフトの終了の仕方」** を必ずご覧ください。
 
-DokodemoLLMはOpenAI互換APIをサポートしているため、NVIDIA DGX Sparkなどのマシン上で互換APIサーバーを起動すると、ローカルLLMとして利用できます。ここでは、vLLMをDGX Spark上でDockerコンテナとして動かす方法を例に説明します。
+### 3) DokodemoLLMahk.exe を起動する
 
-**ショートカット**: **Ctrl-Win-d** でDGX／ローカルLLMを呼び出します。
+* タスクトレイにアイコンが出ます。
+* **初回のみ**、内部的な準備のために **数十秒かかる**ことがあります。
+  そのため、通常は **自動起動（後述）**がおすすめです。
 
-### 1. DGX Spark 側の設定（vLLM の起動）
+---
 
-- **前提**: NVIDIA DGX Spark（Ubuntu 22.04 LTS 推奨）、NVIDIAドライバ・CUDA、Docker および NVIDIA Container Toolkit がインストール済みであること。
-- **vLLM コンテナの起動**: DGX SparkにSSHなどでログインし、次を実行します。
-  ```bash
-  docker run -d --gpus all -p 8000:8000 --shm-size=16g \
-    --restart unless-stopped --name vllm-llama \
-    nvcr.io/nvidia/vllm:25.10-py3 \
-    vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4" --host 0.0.0.0
-  ```
-- **起動確認**: `docker ps` および `docker logs -f vllm-llama` で確認。DGX上で `curl http://localhost:8000/v1/models` でモデル一覧（JSON）を取得。その `id` が環境変数 `LOCALLLM_MODEL` に設定する値です。
-- **ファイアウォール**: Windowsから接続できない場合は、DGX側（SSHで）で `sudo ufw allow 8000` と `sudo ufw reload` を実行。
+## 使い方
 
-### 高性能モデル（70B）を使う場合
+1. 文章を範囲選択
+2. ショートカットを押す
+3. プロンプト入力 → 実行
+4. 結果が貼り込まれる
 
-DGX Spark（128GB 統一メモリ）では、8B より高性能な **70B クラスの量子化モデル** も動作します。品質を上げたい場合は次のように切り替えてください。
+既定のショートカット：
 
-1. **既存の 8B コンテナを止める**（同じポートで 70B を動かす場合）
-   ```bash
-   docker stop vllm-llama
-   docker rm vllm-llama
-   ```
+* **Win + Ctrl + O**：OpenAI（GPT）
+* **Win + Ctrl + G**：Gemini
+* **Ctrl + Win + D**：ローカルLLM（後述）
 
-2. **70B モデルで vLLM を起動する**  
-   - **Llama 3.3 70B（推奨）** — 新しい世代で性能・指示追従が良いです。Blackwell 向け FP4 量子化:
-     ```bash
-     docker run -d --gpus all -p 8000:8000 --shm-size=32g \
-       --restart unless-stopped --name vllm-llama \
-       nvcr.io/nvidia/vllm:25.10-py3 \
-       vllm serve "nvidia/Llama-3.3-70B-Instruct-FP4" --host 0.0.0.0
-     ```
-   - **Llama 3.1 70B** — 安定した選択肢。FP8 量子化（Blackwell/Hopper 両対応）:
-     ```bash
-     docker run -d --gpus all -p 8000:8000 --shm-size=32g \
-       --restart unless-stopped --name vllm-llama \
-       nvcr.io/nvidia/vllm:25.10-py3 \
-       vllm serve "nvidia/Llama-3.1-70B-Instruct-FP8" --host 0.0.0.0
-     ```
+---
 
-3. **Windows 側の環境変数を更新**  
-   - `LOCALLLM_MODEL` を起動したモデル名に合わせて変更します。  
-     - Llama 3.3 70B: `nvidia/Llama-3.3-70B-Instruct-FP4`  
-     - Llama 3.1 70B: `nvidia/Llama-3.1-70B-Instruct-FP8`
+## 履歴（prompt_history.txt）
 
-4. **補足**
-   - `--shm-size=32g` は 70B 用に 16g より大きくしています。メモリ不足になる場合は `--gpu-memory-utilization 0.85` などを vLLM のオプションで調整できます。
-   - 初回はモデルダウンロードで時間がかかります。起動確認は `docker logs -f vllm-llama` で行えます。
+* 入力したプロンプトの履歴が `prompt_history.txt` に保存されます。
+* 保存されるのは **直近までの 256 件**です（古いものから消えます）。
+* 都合のわるい履歴は、テキストエディタなどで `prompt_history.txt` を編集・削除してもよいでしょう。
 
-5. **参考（70B モデルについて）**  
-   Llama 3.3 70B Instruct FP4 は、Meta の 70B パラメータモデルを指令追従用にチューニングしたものを、NVIDIA が 4 ビット浮動小数点（FP4）に量子化したものです。DGX Spark の 128GB 統一メモリと Blackwell の FP4 対応を活かした構成で、70B を 1 台で動作させられます。性能の目安としては、OpenAI でいえば GPT-3.5 より上〜GPT-4 に近いクラスとされることが多く、GPT-4o ほどではありませんが多くのタスクで実用レベルです。
+---
 
-### 2. DokodemoLLM 側の設定（Windows PC）
+## 自動起動（おすすめ）
 
-- **環境変数**: `LOCALLLM_BASE_URL`（例: `http://192.168.50.203:8000/v1`）、`LOCALLLM_MODEL`（例: `nvidia/Llama-3.1-8B-Instruct-NVFP4`）、`LOCALLLM_API_KEY`（不要なら `EMPTY`）。
-- **接続確認**: WindowsのPowerShellで `Test-NetConnection -ComputerName <DGXのIP> -Port 8000` および `curl.exe http://<DGXのIP>:8000/v1/models` で確認。
+起動後に内部処理が整うまで **数十秒かかる**ことがあります（初回は長めになることもある）。
+普段使いなら Windows 起動時に自動起動がおすすめです。
 
-### その他
+1. `Win + R`
+2. `shell:startup` → Enter
+3. 開いたフォルダに **DokodemoLLMahk.exe のショートカット**を入れる
 
-- **NVIDIA NIM** や **LM Studio** など、OpenAI互換APIを提供する他のサーバーも同様に `LOCALLLM_BASE_URL` 等で利用できます。
-- `--host 0.0.0.0` で公開する場合は、ファイアウォールや必要に応じてvLLMのAPIキー認証などでセキュリティを確保してください。
+---
 
-## Macでの使用
-1. **AutoHotKey以外のスニペットツールを用意**
-適切なスニペットツールを使ってDokodemoLLM.pyを呼び出すようにスクリプトを作ってください。
-したがって、Pythonの動作環境が必要となります。
-スニペットツールからはプロンプトがDokodemoLLM.pyにクリップボードで渡され、DokodemoLLM.pyからはやはりクリップボード経由で結果がスニペットツールに戻されます。詳しくはソースコードをご覧ください。
+## ローカルLLM（任意）
 
-## 免責事項
+**Ctrl + Win + D** は、OpenAI互換APIの **ローカルLLM / 社内サーバ**向けです。
 
-本ソフトウェアの利用によりユーザーが被った損害について、作者・貢献者は一切補償しません。個別の質問には基本的にお答えできません。ソースコードが公開されているため、AIに聞く、あるいはコードを自身で確認することを検討してください。とくにサーバー側の設定（ローカルLLM・vLLM・DGX Spark など）はユーザーの環境に依存するため、自身で解決してください。
+環境変数：
+
+* `LOCALLLM_BASE_URL`（例 `http://<IP>:8000/v1`）
+* `LOCALLLM_MODEL`
+* `LOCALLLM_API_KEY`（必要な場合のみ）
+
+補足：
+
+* IP は、ルーターなどからローカルLLMを立ち上げたサーバーの IP アドレスを設定してください。
+* Tailscale などを使ってリモートからアクセスしたい場合は、サーバー上で `tailscale ip` のコマンドで表示された IP アドレスを設定してください。
+  つまり、出先からでもネット環境があればローカルLLMが使えます。
+
+---
+
+## ショートカットを変更する方法（AutoHotKeyが必要）＋exe再作成
+
+ショートカットを変えたい場合は `DokodemoLLM.ahk` を編集し、**AutoHotKey を使って再度 exe 化**します。
+
+1. **AutoHotKey（AHK）** を公式サイトからインストール
+2. `DokodemoLLM.ahk` をエディタで開いてホットキー定義を変更
+
+   * 記法の目安：
+
+     * `#` = Win
+     * `^` = Ctrl
+     * `!` = Alt
+   * 例：
+
+     * `#^o::`（Win+Ctrl+O）
+     * `#^g::`（Win+Ctrl+G）
+     * `^#d::`（Ctrl+Win+D）
+3. `build_ahk_exe.bat` を実行して `DokodemoLLMahk.exe` を作り直す
+4. ソフトを終了 → 起動し直す
+
+注意：
+
+* OneDrive/Dropbox 等の同期フォルダ直下でのビルドは避けてください（ロックで失敗することがあります）。
+* ショートカットは他ソフトと衝突することがあるので、反応しない場合は別の組み合わせにしてください。
+
+---
+
+## ソフトの終了の仕方（重要）
+
+環境変数の設定変更後や、反応がおかしい時は **いったん終了して再起動**してください。
+
+### タスクマネージャから終了
+
+1. `Ctrl + Shift + Esc` → タスクマネージャ
+2. `DokodemoLLMahk.exe` / `DokodemoLLM.exe` を探す
+3. **タスクの終了**
+
+---
+
+## クレジット
+
+* Author / Maintainer: **hortense667**
+* GitHub: `hortense667/DokodemoLLM`
+* 使用技術：
+
+  * **AutoHotKey**（常駐ホットキー）
+  * **OpenAI API / Gemini API**（設定に応じて利用）
+
+---
+
+## 免責
+
+本ソフトウェアの利用によりユーザーが被った損害について、作者・貢献者は一切補償しません。
+個別の質問には基本的にお答えできません。ソースコードが公開されているため、AIに聞く、あるいはコードを自身で確認することを検討してください。
+とくにサーバー側の設定（ローカルLLM・vLLM・DGX Spark など）はユーザーの環境に依存するため、自身で解決してください。
 
